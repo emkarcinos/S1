@@ -1,1 +1,1 @@
-First semester git repos from Marcin Kostrzewski
+Marcin Kostrzewski's git repos, ASD & PPR
