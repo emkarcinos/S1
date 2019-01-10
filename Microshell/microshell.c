@@ -70,23 +70,32 @@ void history_print(char *lines_count){
 /* BUILT IN FUNCTIONS */
 
 void my_cd(char **arg){
-    if (arg[1]!=NULL){
+    if (arg[1]==NULL){
+        printf("No arguments to cd, type 'help' for more information. \n");
+    } else if (arg[1][0]=='~') {
+        chdir("/home");
+    } else {
         int status=chdir(arg[1]);
         if(status!=0)
             perror("cd error");
-    } else
-        printf("No arguments to cd, type 'help' for more information. \n");
+    }
 }
 
-void my_exit(char **arg){
+void my_exit(){
     printf("Exiting...\n");
     exit(EXIT_SUCCESS);
 }
 
 void my_touch(char **arg){
-    int status=creat(arg[1], 0666);
-    if(status!=0)
-        perror("Touch error");
+    if(access(arg[1], F_OK)!=-1){
+        printf("Touch error: File alredy exists\n");
+        return;
+    } else {
+        int fd=creat(arg[1], 0666);
+        close(fd);
+        if(fd==-1)
+            perror("Touch error");
+    }
 }
 
 void my_mkdir(char **arg){
@@ -152,7 +161,7 @@ int myfunc_caller(char **arg){      /* calls built in functions */
         my_cd(arg);
         return 0;
     } else if(strcmp(arg[0], "exit")==0){
-        my_exit(arg);
+        my_exit();
         return 0;
     } else if(strcmp(arg[0], "touch")==0){
         my_touch(arg);
@@ -171,8 +180,8 @@ int myfunc_caller(char **arg){      /* calls built in functions */
             printf("Execution error: expected an argument.\n");
             return 0;
         } else {
-        my_hist(arg[1]);
-        return 0;
+            my_hist(arg[1]);
+            return 0;
         }
     } else
     return 1;
@@ -203,6 +212,11 @@ char **argumentator(char* line){    /*splits a line into an array of arguments *
         temp=strtok(NULL, DELIMETER);
     }
     args[i]=NULL;
+    if(args[1][0]=='"' || args[1][0]=='\'')
+        args[1]++;
+        int lastarg_len=strlen(args[i-1])-1;
+        if(args[i-1][lastarg_len]=='\'' || args[i-1][lastarg_len]=='"')
+            args[i-1][lastarg_len]=NULL;
     return args;
 }
 
@@ -229,8 +243,11 @@ void exec_(char **arg){                     /* executes an order */
 void do_instruction(){                      /* gets an order */
     char *line=(char*)malloc(sizeof(char)*TXT_SIZE);
     char **arg=(char**)malloc(sizeof(char*)*ARG_SIZE);
-    if(*fgets(line, TXT_SIZE, stdin)=='\n')
+    char temp=*fgets(line, TXT_SIZE, stdin);
+    if(temp=='\n')
         return;
+    else if(temp==' ')
+        temp++;
     history_add(line);
     arg=argumentator(line);
     if(myfunc_caller(arg)!=0)  
