@@ -212,11 +212,14 @@ char **argumentator(char* line){    /*splits a line into an array of arguments *
         temp=strtok(NULL, DELIMETER);
     }
     args[i]=NULL;
-    if(args[1][0]=='"' || args[1][0]=='\'')
+    if(i<=1) /* happens when no arguments were specified */
+        return args;
+    else if(args[1][0]=='"' || args[1][0]=='\''){
         args[1]++;
         int lastarg_len=strlen(args[i-1])-1;
         if(args[i-1][lastarg_len]=='\'' || args[i-1][lastarg_len]=='"')
-            args[i-1][lastarg_len]=NULL;
+            args[i-1][lastarg_len]='\0';
+    }
     return args;
 }
 
@@ -246,8 +249,6 @@ void do_instruction(){                      /* gets an order */
     char temp=*fgets(line, TXT_SIZE, stdin);
     if(temp=='\n')
         return;
-    else if(temp==' ')
-        temp++;
     history_add(line);
     arg=argumentator(line);
     if(myfunc_caller(arg)!=0)  
